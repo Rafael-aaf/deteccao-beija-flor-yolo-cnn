@@ -1,0 +1,29 @@
+# Hiperparâmetros da CNN
+
+name: species_classifier
+version: v1
+arch: efficientnet_b0
+seed: 42
+img_size: 224
+
+crop:
+  margin: 0.25
+  max_side: 320
+
+train:
+  batch_size: 32
+  num_workers: 2
+  epochs_head: 5
+  epochs_finetune: 25
+  patience: 8
+  lr_head: 0.001
+  lr_backbone: 0.0001
+  weight_decay: 0.01
+
+augmentation:
+  scale: [0.7, 1.0]
+  ratio: [0.9, 1.1]
+  rotation: 10
+  brightness: 0.2
+  contrast: 0.2
+  saturation: 0.1

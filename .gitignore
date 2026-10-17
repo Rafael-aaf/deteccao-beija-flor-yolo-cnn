@@ -1,0 +1,9 @@
+data/
+notebooks/
+runs/
+weights/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.vscode

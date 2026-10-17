@@ -1,0 +1,18 @@
+# Hiperparâmetros do YOLO
+
+model: yolo11s.pt
+name: hummingbird
+seed: 42
+
+train:
+  epochs: 100
+  patience: 20
+  batch: 16
+  imgsz: 640
+  workers: 4
+  device: null
+  # lr0 só tem efeito quando o optimizer é nomeado (ex.: AdamW); com auto ele é ignorado
+  optimizer: auto
+  # null treina todas as camadas; um inteiro N congela as N primeiras
+  freeze: null
+  degrees: 10.0

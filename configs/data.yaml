@@ -1,0 +1,16 @@
+seed: 42
+
+datasets:
+  - cub200
+  - nabirds
+
+img_exts: [".jpg", ".jpeg", ".png"]
+
+split_ratios:
+  train: 0.70
+  val: 0.15
+  test: 0.15
+
+# O CUB escreve "Anna", o NABirds escreve "Annas": unifica para a mesma espécie
+species_aliases:
+  Anna_Hummingbird: Annas_Hummingbird

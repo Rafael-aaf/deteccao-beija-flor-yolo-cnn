@@ -1,0 +1,10 @@
+numpy==2.4.6
+pandas==3.0.6
+matplotlib==3.11.1
+opencv-python==5.0.0.93
+Pillow==12.3.0
+scikit-learn==1.9.1
+torch==2.14.1+cpu
+torchvision==0.29.1+cpu
+ultralytics==8.4.173
+tqdm==4.70.1

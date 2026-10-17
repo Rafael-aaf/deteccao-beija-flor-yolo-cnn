@@ -1,0 +1,9 @@
+run_name: hummingbird_pipeline_v4
+detector: hummingbird_detector_yolo11s_v1.pt
+classifier: species_classifier_efficientnet_b0_v1.pt
+det_conf: 0.4
+min_species_conf: 0.7
+text_scale: 1.0
+show_window: true
+window_max_width: 1280
+max_frames: null

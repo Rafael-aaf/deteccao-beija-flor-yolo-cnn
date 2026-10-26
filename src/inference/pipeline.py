@@ -18,6 +18,7 @@ class Detection:
     track_id: Optional[int]
     species: str
     confidence: float
+    top2: tuple[tuple[str, float], ...]
     det_confidence: float
     uncertain: bool
 
@@ -29,7 +30,8 @@ class HummingbirdPipeline:
         self.min_species_conf = cfg["min_species_conf"]
         self.detector = YOLO(str(WEIGHTS_DIR / cfg["detector"]))
         self.classifier, self.ckpt = load_classifier(WEIGHTS_DIR / cfg["classifier"], device)
-        self.votes = defaultdict(lambda: defaultdict(lambda: [0.0, 0]))
+        n_classes = len(self.ckpt["classes"])
+        self.votes = defaultdict(lambda: [np.zeros(n_classes), 0])
 
     @property
     def n_tracks(self) -> int:
@@ -44,27 +46,36 @@ class HummingbirdPipeline:
         track_ids = result.boxes.id.int().tolist() if result.boxes.id is not None else [None] * len(boxes)
         det_confs = result.boxes.conf.tolist()
         image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        predictions = classify_boxes(self.classifier, self.ckpt, image, boxes, self.device)
+        probabilities = classify_boxes(self.classifier, self.ckpt, image, boxes, self.device)
 
         detections = []
-        for track_id, box, det_conf, (species, conf) in zip(track_ids, boxes, det_confs, predictions):
+        for track_id, box, det_conf, probs in zip(track_ids, boxes, det_confs, probabilities):
             if track_id is not None:
-                species, conf = self._vote(track_id, species, conf)
+                probs = self._vote(track_id, probs)
+            top2 = self._top2(probs)
+            species, conf = top2[0]
             detections.append(
                 Detection(
                     box=tuple(int(v) for v in box),
                     track_id=track_id,
                     species=species,
                     confidence=conf,
+                    top2=top2,
                     det_confidence=det_conf,
                     uncertain=conf < self.min_species_conf,
                 )
             )
         return detections
 
-    def _vote(self, track_id: int, species: str, conf: float) -> tuple[str, float]:
-        bird = self.votes[track_id]
-        bird[species][0] += conf
-        bird[species][1] += 1
-        winner = max(bird, key=lambda s: bird[s][0])
-        return winner, bird[winner][0] / bird[winner][1]
+    def _vote(self, track_id: int, probs: np.ndarray) -> np.ndarray:
+        entry = self.votes[track_id]
+        entry[0] += probs
+        entry[1] += 1
+        return entry[0] / entry[1]
+
+    def _top2(self, probs: np.ndarray) -> tuple[tuple[str, float], ...]:
+        best = np.argsort(probs)[::-1][:2]
+        return tuple((self.ckpt["classes"][i], float(probs[i])) for i in best)
+
+    def summary(self) -> dict[int, tuple[tuple[str, float], ...]]:
+        return {track_id: self._top2(total / n) for track_id, (total, n) in self.votes.items()}

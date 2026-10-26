@@ -106,6 +106,10 @@ def main() -> None:
     print(f"Previsões com confiança >= {cfg['min_species_conf']:.0%}: {sum(species_counts.values())} | incertas: {uncertain}")
     for species, n in species_counts.most_common():
         print(f"  {species}: {n}")
+    print("Espécies mais prováveis por ave (média das probabilidades):")
+    for track_id, top2 in pipeline.summary().items():
+        ranking = " | ".join(f"{s.replace('_', ' ')}: {p:.1%}" for s, p in top2)
+        print(f"  Ave #{track_id}: {ranking}")
     print(f"Vídeo salvo em: {out_path.relative_to(ROOT).as_posix()}")
 
 

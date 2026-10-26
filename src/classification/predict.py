@@ -2,6 +2,7 @@ from pathlib import Path
 
 import torch
 from PIL import Image
+import numpy as np
 
 from src.classification.dataset import eval_transform
 from src.classification.model import build_model
@@ -16,11 +17,10 @@ def load_classifier(path: Path, device: torch.device):
 
 
 @torch.no_grad()
-def classify_boxes(model, ckpt, image: Image.Image, boxes: list, device: torch.device) -> list[tuple[str, float]]:
+def classify_boxes(model, ckpt, image: Image.Image, boxes: list, device: torch.device) -> list[np.ndarray]:
     if not boxes:
         return []
     transform = eval_transform(ckpt["img_size"])
     crops = [square_crop(image, box, ckpt["crop_margin"]) for box in boxes]
     batch = torch.stack([transform(crop) for crop in crops]).to(device)
-    confidence, index = model(batch).softmax(dim=1).max(dim=1)
-    return [(ckpt["classes"][i], c) for i, c in zip(index.tolist(), confidence.tolist())]
+    return list(model(batch).softmax(dim=1).cpu().numpy())

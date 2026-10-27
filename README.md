@@ -13,8 +13,50 @@ https://www.kaggle.com/code/rafaaaf/beija-flor-yolo-fine-tuning2
 
 7 - src/inference/ faz o que os notebooks faziam.
 
-USE o parametro project para botar as runs/ na raiz!
+8 - https://zenodo.org/records/60375
 
-TO DO: colocar como output 2 espécies, testar todos os vídeos (usar o Kaggle) usando alguma métrica. Fazer Data Augmentation nas classes que não tem performance tão alta (ex: Broad-tailed_Hummingbird, principalmente nas fêmeas, Allen e Rufous, já que erram bastante).
+9 - yt-dlp para buscar vídeos de beija flor (não deu muito certo)
+
+10 - soft-voting
+
+USE o parametro project para botar as runs/ na raiz!
+track_id!!!
+
+TO DO: Grad-cam, testar todos os vídeos (usar o Kaggle) usando alguma métrica. Fazer Data Augmentation nas classes que não tem performance tão alta (ex: Broad-tailed_Hummingbird, principalmente nas fêmeas, Allen e Rufous, já que erram bastante).
 
 vb100 dataset: baixados: 01 (Allen_Hummingbird), 02, 03 (Black-chinned_Hummingbird), 04 (Black_Skimmer o primeiro), 
+
+
+
+Comandos para rodar:
+```bash
+# 1. Converte as anotações para o formato YOLO, faz o split e gera data/yolo e data/splits.csv
+python -m src.data.build_yolo_dataset
+
+# 2. Gera o zip com data/yolo e o detector.yaml para subir no Kaggle
+python -m src.data.make_kaggle_zip
+
+# 3. Fine-tuning do YOLO (eu treinei no Kaggle)
+python -m src.detection.train
+
+# 4. Gera os recortes das aves para a CNN
+python -m src.data.make_crops
+
+# 5. Treina a CNN de espécies
+python -m src.classification.train
+
+# 6. Avalia a CNN no conjunto de teste
+python -m src.classification.evaluate
+
+# 7. Roda detector + CNN + tracking em um vídeo
+# Parâmetros opcionais, no fim do comando:
+#   --name NOME         nome da pasta de saída em runs/pipeline/ (padrão: run_name do configs/inference.yaml)
+#   --max-frames N      processa só os primeiros N quadros, bom para teste rápido
+#   --no-show           não abre a janela do vídeo
+# Exemplo: python -m src.inference.video data/videos/nome_do_arquivo.mp4 --name hummingbird_pipeline_v1 --max-frames 150
+python -m src.inference.video data/videos/nome_do_arquivo.mp4
+```
+
+
+
+TESTAR IMAGEM erro_nabirds_41eb1fb7c15c48a680b631725c1ff868.png pois é roxo. ver qual a segunda espécie prevista.

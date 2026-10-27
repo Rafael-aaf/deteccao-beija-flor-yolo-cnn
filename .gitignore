@@ -1,5 +1,5 @@
 data/
-notebooks/
+scratch/
 runs/
 weights/
 __pycache__/

@@ -1,4 +1,7 @@
 import argparse
+import csv
+import re
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -40,6 +43,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-show", action="store_true", help="não abre a janela do vídeo")
     return parser.parse_args()
 
+def append_row(path: Path, row: dict) -> None:
+    is_new = not path.exists()
+    with path.open("a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(row))
+        if is_new:
+            writer.writeheader()
+        writer.writerow(row)
 
 def main() -> None:
     args = parse_args()
@@ -73,6 +83,8 @@ def main() -> None:
 
     n_frames = detected_frames = uncertain = 0
     species_counts = Counter()
+    spans = {}
+    start = time.perf_counter()
 
     try:
         for _ in tqdm(range(total)):
@@ -85,6 +97,8 @@ def main() -> None:
             detected_frames += bool(detections)
             for detection in detections:
                 draw(frame, detection, cfg["text_scale"])
+                if detection.track_id is not None:
+                    spans.setdefault(detection.track_id, [n_frames, n_frames])[1] = n_frames
                 if detection.uncertain:
                     uncertain += 1
                 else:
@@ -100,6 +114,45 @@ def main() -> None:
         writer.release()
         if show:
             cv2.destroyAllWindows()
+
+    elapsed = time.perf_counter() - start
+    run_dir = out_path.parent
+    classes = pipeline.ckpt["classes"]
+    overall = list(pipeline.overall_top2()) + [("", None)] * 2
+
+    append_row(run_dir / "videos.csv", {
+        "video": args.source.stem,
+        "origem": args.source.parent.name,
+        "especie_real": re.sub(r"_\d+$", "", args.source.stem),
+        "quadros": n_frames,
+        "quadros_com_deteccao": detected_frames,
+        "taxa_deteccao": round(detected_frames / max(n_frames, 1), 4),
+        "n_aves": pipeline.n_tracks,
+        "previsoes_confiantes": sum(species_counts.values()),
+        "previsoes_incertas": uncertain,
+        "top1": overall[0][0],
+        "top1_prob": overall[0][1],
+        "top2": overall[1][0],
+        "top2_prob": overall[1][1],
+        "tempo_s": round(elapsed, 2),
+        "fps": round(n_frames / elapsed, 2) if elapsed else None,
+    })
+
+    for track_id, ((s1, p1), (s2, p2)) in pipeline.summary().items():
+        total, n = pipeline.votes[track_id]
+        row = {
+            "video": args.source.stem,
+            "track_id": track_id,
+            "quadros": n,
+            "quadro_inicial": spans[track_id][0],
+            "quadro_final": spans[track_id][1],
+            "top1": s1,
+            "top1_prob": p1,
+            "top2": s2,
+            "top2_prob": p2,
+        }
+        row.update({f"p_{c}": float(p) for c, p in zip(classes, total / n)})
+        append_row(run_dir / "aves.csv", row)
 
     print(f"Quadros: {n_frames} | com detecção: {detected_frames} ({detected_frames / max(n_frames, 1):.0%})")
     print(f"Aves acompanhadas (IDs): {pipeline.n_tracks}")

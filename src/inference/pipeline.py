@@ -79,3 +79,10 @@ class HummingbirdPipeline:
 
     def summary(self) -> dict[int, tuple[tuple[str, float], ...]]:
         return {track_id: self._top2(total / n) for track_id, (total, n) in self.votes.items()}
+
+    def overall_top2(self) -> tuple[tuple[str, float], ...]:
+        if not self.votes:
+            return ()
+        total = sum(t for t, _ in self.votes.values())
+        n = sum(n for _, n in self.votes.values())
+        return self._top2(total / n)

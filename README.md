@@ -1,7 +1,7 @@
 ## WIP
 Video demo:
 
-<video src="https://raw.githubusercontent.com/Rafael-aaf/deteccao-beija-flor-yolo-cnn/main/docs/Costa_Hummingbird_00012_species.mp4" controls width="640"></video>
+https://github.com/user-attachments/assets/a063bc74-9f66-4686-abb4-e586d82c540e
 
 1 - data extraction: https://www.kaggle.com/code/rafaaaf/humminbirds-from-cub200-and-nabirds
 
